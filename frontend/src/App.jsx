@@ -7,6 +7,8 @@ function App() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState(null);
+  const [openActionMenuId, setOpenActionMenuId] = useState(null);
+  const [menuPosition, setMenuPosition] = useState(null);
 
   function getEmptyForm() {
     return {
@@ -43,10 +45,33 @@ function App() {
     setForm((prev) => ({ ...prev, [name]: value }));
   }
 
+  function toggleActionMenu(id, event) {
+    if (openActionMenuId === id) {
+      setOpenActionMenuId(null);
+      setMenuPosition(null);
+      return;
+    }
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    const menuWidth = 140;
+
+    setMenuPosition({
+      top: rect.bottom + 8,
+      left: Math.min(
+        rect.right - menuWidth,
+        window.innerWidth - menuWidth - 12,
+      ),
+    });
+
+    setOpenActionMenuId(id);
+  }
+
   function resetForm() {
     setForm(getEmptyForm());
     setIsEditMode(false);
     setEditingEmployee(null);
+    setOpenActionMenuId(null);
+    setMenuPosition(null);
   }
 
   function openCreateForm() {
@@ -57,6 +82,8 @@ function App() {
   function openEditForm(emp) {
     setIsEditMode(true);
     setEditingEmployee(emp);
+    setOpenActionMenuId(null);
+    setMenuPosition(null);
     setForm({
       email: emp.email || "",
       password: emp.password || "",
@@ -77,6 +104,8 @@ function App() {
 
     try {
       await axios.delete(`http://localhost:8080/employee/delete/${emp._id}`);
+      setOpenActionMenuId(null);
+      setMenuPosition(null);
       fetchEmployees();
     } catch (err) {
       console.error(err);
@@ -167,47 +196,69 @@ function App() {
                 </tr>
               </thead>
               <tbody>
-                {employeeData.map((emp) => (
-                  <tr key={emp._id || emp.email}>
-                    <td>{emp.fullName || "—"}</td>
-                    <td>{emp.email || "—"}</td>
-                    <td>{emp.role || "—"}</td>
-                    <td>{emp.department || "—"}</td>
-                    <td>{emp.designation || "—"}</td>
-                    <td>
-                      {emp.salary
-                        ? `$${Number(emp.salary).toLocaleString()}`
-                        : "—"}
-                    </td>
-                    <td>{formatDate(emp.joiningDate)}</td>
-                    <td>
-                      <span
-                        className={`status-badge ${getStatusClass(emp.status)}`}
-                      >
-                        {emp.status || "Active"}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="action-cell">
-                        <button
-                          type="button"
-                          className="action-btn edit-btn"
-                          onClick={() => openEditForm(emp)}
-                        >
-                          Edit
-                        </button>
+                {employeeData.map((emp) => {
+                  const rowId = emp._id || emp.email;
 
-                        <button
-                          type="button"
-                          className="action-btn delete-btn"
-                          onClick={() => handleDelete(emp)}
+                  return (
+                    <tr key={rowId}>
+                      <td>{emp.fullName || "—"}</td>
+                      <td>{emp.email || "—"}</td>
+                      <td>{emp.role || "—"}</td>
+                      <td>{emp.department || "—"}</td>
+                      <td>{emp.designation || "—"}</td>
+                      <td>
+                        {emp.salary
+                          ? `$${Number(emp.salary).toLocaleString()}`
+                          : "—"}
+                      </td>
+                      <td>{formatDate(emp.joiningDate)}</td>
+                      <td>
+                        <span
+                          className={`status-badge ${getStatusClass(emp.status)}`}
                         >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                          {emp.status || "Active"}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="action-cell">
+                          <button
+                            type="button"
+                            className="menu-btn"
+                            onClick={(event) => toggleActionMenu(rowId, event)}
+                            aria-label="Open actions"
+                          >
+                            ⋮
+                          </button>
+
+                          {openActionMenuId === rowId && menuPosition && (
+                            <div
+                              className="action-menu"
+                              style={{
+                                top: `${menuPosition.top}px`,
+                                left: `${menuPosition.left}px`,
+                              }}
+                            >
+                              <button
+                                type="button"
+                                className="menu-action-btn edit"
+                                onClick={() => openEditForm(emp)}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                className="menu-action-btn delete"
+                                onClick={() => handleDelete(emp)}
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -333,9 +384,7 @@ function App() {
                   value={form.status}
                   onChange={handleChange}
                 >
-                  <option selected disabled>
-                    --Select a status--
-                  </option>
+                  <option disabled>--Select a status--</option>
                   <option value="Active">Active</option>
                   <option value="Inactive">Inactive</option>
                 </select>
