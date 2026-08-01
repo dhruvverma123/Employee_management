@@ -10,76 +10,87 @@ let PORT = 8080;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(cors({ origin: "https://employee-management-1-qo93.onrender.com" }));
+app.use(
+  cors({
+    origin: [
+      "https://employee-management-1-qo93.onrender.com",
+      "http://localhost:5173",
+    ],
+  }),
+);
 
-app.get("/", async (req, res) => {
-  let allEmployee = await Employee.find({});
-  res.json(allEmployee);
+app.get("/", async (req, res, next) => {
+  try {
+    let allEmployee = await Employee.find({});
+    res.json(allEmployee);
+  } catch (err) {
+    next(err);
+  }
 });
 
-app.post("/employee/create", (req, res) => {
-  let {
-    email,
-    password,
-    role,
-    fullName,
-    phone,
-    department,
-    designation,
-    salary,
-    joiningDate,
-    status,
-  } = req.body;
+app.post("/employee/create", (req, res, next) => {
+  try {
+    let {
+      email,
+      role,
+      fullName,
+      phone,
+      department,
+      salary,
+      joiningDate,
+      status,
+    } = req.body;
 
-  let newEmployee = new Employee({
-    email: email,
-    password: password,
-    role: role,
-    fullName: fullName,
-    phone: phone,
-    department: department,
-    designation: designation,
-    salary: salary,
-    joiningDate: joiningDate,
-    status: status,
-  });
+    let newEmployee = new Employee({
+      email: email,
+      role: role,
+      fullName: fullName,
+      phone: phone,
+      department: department,
+      salary: salary,
+      joiningDate: joiningDate,
+      status: status,
+    });
 
-  newEmployee.save();
-  res.json({ message: "EmployeeData has been created", success: true });
+    newEmployee.save();
+    res.json({ message: "EmployeeData has been created", success: true });
+  } catch (err) {
+    next(err);
+  }
 });
 
-app.put("/employee/update/:id", async (req, res) => {
-  let { id } = req.params;
-  let {
-    email,
-    password,
-    role,
-    fullName,
-    phone,
-    department,
-    designation,
-    salary,
-    joiningDate,
-    status,
-  } = req.body;
+app.put("/employee/update/:id", async (req, res, next) => {
+  try {
+    let { id } = req.params;
+    let {
+      email,
+      role,
+      fullName,
+      phone,
+      department,
+      salary,
+      joiningDate,
+      status,
+    } = req.body;
 
-  let newEmployee = await Employee.findByIdAndUpdate(id, {
-    email: email,
-    password: password,
-    role: role,
-    fullName: fullName,
-    phone: phone,
-    department: department,
-    designation: designation,
-    salary: salary,
-    joiningDate: joiningDate,
-    status: status,
-  });
+    let newEmployee = await Employee.findByIdAndUpdate(id, {
+      email: email,
+      role: role,
+      fullName: fullName,
+      phone: phone,
+      department: department,
+      salary: salary,
+      joiningDate: joiningDate,
+      status: status,
+    });
 
-  res.json({ message: "EmployeeData has been updated", success: true });
+    res.json({ message: "EmployeeData has been updated", success: true });
+  } catch (err) {
+    next(err);
+  }
 });
 
-app.delete("/employee/delete/:id", async (req, res) => {
+app.delete("/employee/delete/:id", async (req, res, next) => {
   try {
     const employee = await Employee.findByIdAndDelete(req.params.id);
 
@@ -89,11 +100,18 @@ app.delete("/employee/delete/:id", async (req, res) => {
 
     res.json({ message: "Employee deleted successfully" });
   } catch (err) {
-    res.status(400).json({
-      message: "Failed to delete employee",
-      error: err.message,
-    });
+    next(err);
   }
+});
+
+app.use((err, req, res, next) => {
+  const status = Number(err.status) || 500;
+  const message = err.message || "An unexpected error occurred";
+
+  res.status(status).json({
+    success: false,
+    message: message,
+  });
 });
 
 const MONGO_URI = process.env.MONGODB_KEY;
