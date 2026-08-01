@@ -10,7 +10,7 @@ let PORT = 8080;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(cors({ origin: "http://localhost:5173" }));
+app.use(cors({ origin: "https://employee-management-1-qo93.onrender.com" }));
 
 app.get("/", async (req, res) => {
   let allEmployee = await Employee.find({});

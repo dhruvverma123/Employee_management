@@ -29,7 +29,9 @@ function App() {
 
   async function fetchEmployees() {
     try {
-      const res = await axios.get("http://localhost:8080/");
+      const res = await axios.get(
+        "https://employee-management-j1tk.onrender.com/",
+      );
       setEmployeeData(res.data || []);
     } catch (err) {
       console.error(err);
@@ -103,7 +105,9 @@ function App() {
     if (!window.confirm(`Delete ${emp.fullName || emp.email}?`)) return;
 
     try {
-      await axios.delete(`http://localhost:8080/employee/delete/${emp._id}`);
+      await axios.delete(
+        `https://employee-management-j1tk.onrender.com/employee/delete/${emp._id}`,
+      );
       setOpenActionMenuId(null);
       setMenuPosition(null);
       fetchEmployees();
@@ -118,11 +122,14 @@ function App() {
     try {
       if (isEditMode && editingEmployee?._id) {
         await axios.put(
-          `http://localhost:8080/employee/update/${editingEmployee._id}`,
+          `https://employee-management-j1tk.onrender.com/employee/update/${editingEmployee._id}`,
           form,
         );
       } else {
-        await axios.post("http://localhost:8080/employee/create", form);
+        await axios.post(
+          "https://employee-management-j1tk.onrender.com/employee/create",
+          form,
+        );
       }
 
       setIsFormOpen(false);
